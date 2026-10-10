@@ -145,30 +145,24 @@ export default function App() {
   const gasLow = hud.gas < 25;
 
   return (
-    <div className="relative flex h-full w-full select-none flex-col overflow-hidden bg-[#0a110d] text-zinc-100">
-      {/* Top Status Header - Dark Industrial Minimal */}
-      <header className="z-20 flex h-13 shrink-0 items-center justify-between border-b border-lime-500/10 bg-[#0d140e]/90 px-4 backdrop-blur-md">
-        <div className="flex items-center gap-2.5">
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-lime-950/80 border border-lime-800/40 text-sm">
-            ☣️
-          </span>
-          <div>
-            <h1 className="text-xs font-bold tracking-wider text-lime-400 uppercase">FART SIMULATOR</h1>
-            <p className="text-[9px] font-medium text-lime-300/40 tracking-tight">Biohazard Hazard Zone</p>
-          </div>
-        </div>
+    <div className="relative flex h-full w-full select-none flex-col overflow-hidden bg-[#090e0b] text-zinc-100">
+      {/* Top Status Header - Clean Minimal */}
+      <header className="z-20 flex h-11 shrink-0 items-center justify-between border-b border-white/5 bg-black/50 px-4 backdrop-blur-md">
+        <h1 className="text-xs font-semibold tracking-wider text-zinc-300 uppercase">
+          Fart Simulator
+        </h1>
 
-        {/* Action icons */}
-        <div className="flex items-center gap-1.5">
+        {/* Action buttons */}
+        <div className="flex items-center gap-2">
           <button
             onPointerDown={(e) => {
               e.stopPropagation();
               toggleMute();
             }}
             aria-label="Toggle Sound"
-            className="flex h-8 w-8 items-center justify-center rounded-lg border border-lime-900/30 bg-black/40 text-xs active:scale-95 text-zinc-300 hover:text-white transition"
+            className="flex h-7 items-center justify-center rounded-md border border-zinc-800 bg-zinc-900/60 px-2.5 text-[11px] font-medium text-zinc-300 active:scale-95 hover:text-white transition"
           >
-            {muted ? "🔇" : "🔊"}
+            {muted ? "Muted" : "Sound On"}
           </button>
 
           {state === "playing" && (
@@ -179,9 +173,9 @@ export default function App() {
                 triggerHaptic("light");
               }}
               aria-label="Pause Game"
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-amber-900/30 bg-amber-950/40 text-xs text-amber-300 active:scale-95"
+              className="flex h-7 items-center justify-center rounded-md border border-zinc-800 bg-zinc-900/60 px-2.5 text-[11px] font-medium text-zinc-300 active:scale-95"
             >
-              ⏸
+              Pause
             </button>
           )}
 
@@ -192,9 +186,9 @@ export default function App() {
                 setShowHowTo((prev) => !prev);
               }}
               aria-label="Help"
-              className="flex h-8 w-8 items-center justify-center rounded-lg border border-lime-900/30 bg-black/40 text-xs font-semibold text-zinc-300 active:scale-95"
+              className="flex h-7 items-center justify-center rounded-md border border-zinc-800 bg-zinc-900/60 px-2.5 text-[11px] font-medium text-zinc-400 active:scale-95 hover:text-zinc-200"
             >
-              ?
+              Help
             </button>
           )}
         </div>
@@ -221,35 +215,24 @@ export default function App() {
           <div className="pointer-events-none absolute inset-0 animate-pulse bg-gradient-to-t from-red-600/25 via-red-950/10 to-transparent" />
         )}
 
-        {/* ---------------- MAIN MENU (Clean Industrial) ---------------- */}
+        {/* ---------------- MAIN MENU ---------------- */}
         {state === "menu" && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-between p-4 sm:p-8 bg-gradient-to-b from-black/80 via-[#0a120c]/85 to-black/90 backdrop-blur-sm overflow-y-auto">
-            {/* Top Subtitle Badge */}
-            <div className="flex items-center gap-1.5 rounded-full border border-lime-900/40 bg-lime-950/40 px-3 py-1 text-[11px] font-medium text-lime-400">
-              <span className="h-1.5 w-1.5 rounded-full bg-lime-400 animate-pulse" />
-              <span>Biohazard Pipeline Simulation</span>
-            </div>
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-between p-6 bg-gradient-to-b from-black/80 via-[#0a110c]/90 to-black/95 backdrop-blur-sm overflow-y-auto">
+            <div />
 
             {/* Hero Section */}
             <div className="flex flex-col items-center text-center my-auto max-w-sm">
-              <div className="relative mb-3 flex items-center justify-center">
-                <div className="absolute -inset-3 rounded-full bg-lime-500/10 blur-lg" />
-                <span className="relative text-6xl select-none">
-                  🍑
-                </span>
-              </div>
-
               <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-zinc-100">
                 FART <span className="text-lime-400">SIMULATOR</span>
               </h2>
-              <p className="mt-2 text-xs font-normal text-zinc-400 leading-relaxed px-4">
-                Control intestinal thrust to navigate through hazardous industrial sewer pipes and collect beans.
+              <p className="mt-2 text-xs font-normal text-zinc-400 leading-relaxed px-2">
+                Hold to glide upward. Squeeze through the sewer pipes and collect beans to refill gas.
               </p>
 
               {/* Best Score Record */}
               {scores.length > 0 && (
-                <div className="mt-4 flex items-center gap-2 rounded-xl border border-lime-900/30 bg-black/40 px-3.5 py-1.5 text-xs text-zinc-300">
-                  <span className="text-zinc-400 font-medium">Record:</span>
+                <div className="mt-4 flex items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/60 px-3.5 py-1.5 text-xs text-zinc-300">
+                  <span className="text-zinc-500 font-medium">Best:</span>
                   <span className="text-lime-300 font-bold">{scores[0].score}</span>
                   <span className="text-zinc-500 text-[10px]">({scores[0].rank})</span>
                 </div>
@@ -261,30 +244,20 @@ export default function App() {
                   e.stopPropagation();
                   launchGame();
                 }}
-                className="mt-6 w-full max-w-xs rounded-xl border border-lime-600/30 bg-gradient-to-r from-lime-600 to-lime-500 py-3.5 text-sm font-bold uppercase tracking-wider text-black shadow-lg shadow-lime-950/50 active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                className="mt-6 w-full max-w-xs rounded-lg border border-lime-600/30 bg-lime-500 py-3.5 text-sm font-bold uppercase tracking-wider text-black active:scale-[0.98] transition-all flex items-center justify-center"
               >
-                <span>Launch Game</span>
-                <span>💨</span>
+                Start Game
               </button>
             </div>
 
             {/* Instructions Strip */}
-            <div className="w-full max-w-sm rounded-xl border border-lime-950/60 bg-black/40 p-2.5 backdrop-blur-sm">
+            <div className="w-full max-w-sm rounded-lg border border-zinc-800/80 bg-black/40 p-2.5 backdrop-blur-sm">
               <div className="flex items-center justify-around text-center text-[10px] text-zinc-400 font-medium">
-                <div className="flex flex-col items-center gap-0.5">
-                  <span className="text-sm">👆</span>
-                  <span>Hold to Float</span>
-                </div>
-                <div className="h-4 w-px bg-zinc-800" />
-                <div className="flex flex-col items-center gap-0.5">
-                  <span className="text-sm">🫘</span>
-                  <span>Refill Gas</span>
-                </div>
-                <div className="h-4 w-px bg-zinc-800" />
-                <div className="flex flex-col items-center gap-0.5">
-                  <span className="text-sm">⚡</span>
-                  <span>Graze Combo</span>
-                </div>
+                <div>Hold: Float Up</div>
+                <div className="h-3 w-px bg-zinc-800" />
+                <div>Beans: Refill Fuel</div>
+                <div className="h-3 w-px bg-zinc-800" />
+                <div>Pipes: Graze Combo</div>
               </div>
             </div>
           </div>
@@ -293,41 +266,32 @@ export default function App() {
         {/* ---------------- HOW TO PLAY MODAL ---------------- */}
         {showHowTo && (
           <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-fade-in">
-            <div className="w-full max-w-sm rounded-2xl border border-lime-900/40 bg-[#0d140e] p-5 text-left shadow-2xl">
+            <div className="w-full max-w-sm rounded-xl border border-zinc-800 bg-[#0d140e] p-5 text-left shadow-2xl">
               <div className="flex items-center justify-between pb-2.5 border-b border-zinc-800">
-                <h3 className="text-sm font-bold text-lime-400">Game Mechanics</h3>
+                <h3 className="text-sm font-bold text-zinc-200">How to Play</h3>
                 <button
                   onPointerDown={(e) => {
                     e.stopPropagation();
                     setShowHowTo(false);
                   }}
-                  className="h-7 w-7 rounded-lg bg-zinc-900 text-zinc-400 flex items-center justify-center text-xs font-bold hover:text-white"
+                  className="h-6 w-6 rounded-md bg-zinc-900 text-zinc-400 flex items-center justify-center text-xs font-bold hover:text-white"
                 >
                   ✕
                 </button>
               </div>
               <div className="mt-3.5 space-y-2.5 text-xs text-zinc-300 leading-relaxed">
-                <div className="flex items-start gap-2">
-                  <span className="font-bold text-lime-400">1.</span>
-                  <p><strong>Hold anywhere:</strong> Expels gas to propel upward against gravity.</p>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="font-bold text-lime-400">2.</span>
-                  <p><strong>Gas Gauge:</strong> Thrust drains fuel. Pick up beans to replenish.</p>
-                </div>
-                <div className="flex items-start gap-2">
-                  <span className="font-bold text-lime-400">3.</span>
-                  <p><strong>Pipe Grazing:</strong> Fly close to pipe rims to build score multipliers (up to 9x).</p>
-                </div>
+                <p>1. <strong>Hold anywhere:</strong> Squeezes gas to propel you upward against gravity.</p>
+                <p>2. <strong>Gas Meter:</strong> Tooting drains fuel. Pick up beans to replenish.</p>
+                <p>3. <strong>Pipe Grazing:</strong> Fly close to pipe rims to build score multipliers.</p>
               </div>
               <button
                 onPointerDown={(e) => {
                   e.stopPropagation();
                   setShowHowTo(false);
                 }}
-                className="mt-5 w-full rounded-xl bg-lime-500 py-2.5 font-bold text-black uppercase tracking-wider text-xs active:scale-95"
+                className="mt-5 w-full rounded-lg bg-lime-500 py-2.5 font-bold text-black uppercase tracking-wider text-xs active:scale-95"
               >
-                Close
+                Got It
               </button>
             </div>
           </div>
@@ -336,10 +300,9 @@ export default function App() {
         {/* ---------------- PAUSE SCREEN ---------------- */}
         {state === "paused" && (
           <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/80 px-4 text-center backdrop-blur-md animate-fade-in">
-            <div className="w-full max-w-xs rounded-2xl border border-zinc-800 bg-[#0d140e] p-5 shadow-2xl">
-              <span className="text-3xl">⏸</span>
-              <h2 className="mt-2 text-lg font-bold text-zinc-200">Game Paused</h2>
-              <p className="mt-0.5 text-xs text-lime-400">Current Score: {Math.floor(hud.score)}</p>
+            <div className="w-full max-w-xs rounded-xl border border-zinc-800 bg-[#0d140e] p-5 shadow-2xl">
+              <h2 className="text-lg font-bold text-zinc-200">Paused</h2>
+              <p className="mt-0.5 text-xs text-lime-400">Score: {Math.floor(hud.score)}</p>
 
               <div className="mt-5 space-y-2">
                 <button
@@ -348,7 +311,7 @@ export default function App() {
                     gameRef.current?.resume();
                     triggerHaptic("light");
                   }}
-                  className="w-full rounded-xl bg-lime-500 py-2.5 text-xs font-bold uppercase tracking-wider text-black active:scale-[0.98]"
+                  className="w-full rounded-lg bg-lime-500 py-2.5 text-xs font-bold uppercase tracking-wider text-black active:scale-[0.98]"
                 >
                   Resume
                 </button>
@@ -357,7 +320,7 @@ export default function App() {
                     e.stopPropagation();
                     launchGame();
                   }}
-                  className="w-full rounded-xl border border-zinc-700 bg-zinc-900/60 py-2 text-xs font-medium text-zinc-300 active:bg-zinc-800"
+                  className="w-full rounded-lg border border-zinc-700 bg-zinc-900/60 py-2 text-xs font-medium text-zinc-300 active:bg-zinc-800"
                 >
                   Restart
                 </button>
@@ -382,13 +345,12 @@ export default function App() {
         {/* ---------------- GAME OVER SCREEN ---------------- */}
         {state === "dead" && (
           <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/80 px-4 text-center backdrop-blur-md animate-fade-in">
-            <div className="w-full max-w-sm rounded-2xl border border-zinc-800 bg-[#0e140f] p-5 shadow-2xl">
-              <span className="text-3xl">💥</span>
-              <h2 className="mt-1 text-xl font-bold text-red-400">
+            <div className="w-full max-w-sm rounded-xl border border-zinc-800 bg-[#0e140f] p-5 shadow-2xl">
+              <h2 className="text-xl font-bold text-red-400">
                 Crash
               </h2>
               <p className="mt-0.5 text-xs font-medium text-zinc-400">
-                {isNewBest ? "🎉 New High Score!" : rankFor(finalScore)}
+                {isNewBest ? "New High Score!" : rankFor(finalScore)}
               </p>
               <div className="my-2.5 flex items-baseline justify-center gap-1">
                 <span className="text-4xl font-bold text-white tabular-nums">{finalScore}</span>
@@ -396,7 +358,7 @@ export default function App() {
               </div>
 
               {/* High Scores List */}
-              <div className="my-2.5 max-h-32 overflow-y-auto rounded-xl border border-zinc-800/80 bg-black/50 p-2 text-left">
+              <div className="my-2.5 max-h-32 overflow-y-auto rounded-lg border border-zinc-800/80 bg-black/50 p-2 text-left">
                 <div className="flex items-center justify-between pb-1 mb-1 border-b border-zinc-800 text-[10px] text-zinc-500 font-medium uppercase">
                   <span>Leaderboard</span>
                   <span>Top Runs</span>
@@ -426,7 +388,7 @@ export default function App() {
                     e.stopPropagation();
                     launchGame();
                   }}
-                  className="w-full rounded-xl bg-lime-500 py-3 text-xs font-bold uppercase tracking-wider text-black active:scale-[0.98] transition"
+                  className="w-full rounded-lg bg-lime-500 py-3 text-xs font-bold uppercase tracking-wider text-black active:scale-[0.98] transition"
                 >
                   Try Again
                 </button>
@@ -440,7 +402,7 @@ export default function App() {
                         setState("menu");
                       }
                     }}
-                    className="flex-1 rounded-xl border border-zinc-800 bg-zinc-900/50 py-2 text-xs font-medium text-zinc-300 active:bg-zinc-800"
+                    className="flex-1 rounded-lg border border-zinc-800 bg-zinc-900/50 py-2 text-xs font-medium text-zinc-300 active:bg-zinc-800"
                   >
                     Main Menu
                   </button>
@@ -449,7 +411,7 @@ export default function App() {
                       e.stopPropagation();
                       setScores(clearScores());
                     }}
-                    className="rounded-xl border border-zinc-800 bg-zinc-900/30 px-3 py-2 text-[11px] text-zinc-500 hover:text-red-400"
+                    className="rounded-lg border border-zinc-800 bg-zinc-900/30 px-3 py-2 text-[11px] text-zinc-500 hover:text-red-400"
                   >
                     Reset
                   </button>
