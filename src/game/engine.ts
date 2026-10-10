@@ -579,29 +579,86 @@ export class FartGame {
     for (const p of this.pipes) {
       const top = p.gapY - p.gapH / 2;
       const bot = p.gapY + p.gapH / 2;
+      const lip = 18;
+
+      // Pipe gradient: gross toxic sewer green & rusty industrial steel
       const grd = g.createLinearGradient(p.x, 0, p.x + p.w, 0);
-      grd.addColorStop(0, "#cfe7ef");
-      grd.addColorStop(0.35, "#ffffff");
-      grd.addColorStop(1, "#7fa6b4");
-      const lip = 16;
+      grd.addColorStop(0, "#2d4a22");
+      grd.addColorStop(0.25, "#598a3e");
+      grd.addColorStop(0.5, "#84cc16");
+      grd.addColorStop(0.85, "#3f6212");
+      grd.addColorStop(1, "#1c2e15");
+
       const drawSeg = (y: number, hh: number, lipAtBottom: boolean) => {
+        // Main pipe shaft
         g.fillStyle = grd;
         g.beginPath();
-        g.roundRect(p.x + 6, y, p.w - 12, hh, 6);
+        g.roundRect(p.x + 4, y, p.w - 8, hh, 8);
         g.fill();
-        g.fillStyle = grd;
+
+        // Pipe rim / lip
+        const lipY = lipAtBottom ? y + hh - lip : y;
+        const lipGrd = g.createLinearGradient(p.x, 0, p.x + p.w, 0);
+        lipGrd.addColorStop(0, "#365314");
+        lipGrd.addColorStop(0.4, "#a3e635");
+        lipGrd.addColorStop(1, "#1a2e05");
+        g.fillStyle = lipGrd;
         g.beginPath();
-        g.roundRect(p.x - 2, lipAtBottom ? y + hh - lip : y, p.w + 4, lip, 7);
+        g.roundRect(p.x - 3, lipY, p.w + 6, lip, 8);
         g.fill();
-        g.strokeStyle = "rgba(30,60,60,0.35)";
-        g.lineWidth = 2;
+        g.strokeStyle = "rgba(10,25,5,0.7)";
+        g.lineWidth = 2.5;
         g.stroke();
-        // stink drip accents
-        g.fillStyle = "rgba(132,204,22,0.35)";
-        g.fillRect(p.x + 10, lipAtBottom ? y + hh - lip - 4 : y + lip, 4, 10);
+
+        // Pipe inner darkness / opening
+        g.fillStyle = "#0a1208";
+        g.beginPath();
+        g.ellipse(p.x + p.w / 2, lipAtBottom ? lipY + lip - 2 : lipY + 2, (p.w + 2) * 0.45, 4, 0, 0, 6.2832);
+        g.fill();
+
+        // Stinky biohazard sewer rivets / bolts
+        g.fillStyle = "#fef08a";
+        g.beginPath();
+        g.arc(p.x + 4, lipY + lip / 2, 2, 0, 6.2832);
+        g.arc(p.x + p.w - 4, lipY + lip / 2, 2, 0, 6.2832);
+        g.fill();
+
+        // Gross dripping toxic sludge drops
+        const dripWobble = Math.sin(this.time * 3 + p.wobble) * 4;
+        g.fillStyle = "rgba(163, 230, 53, 0.85)";
+        g.beginPath();
+        if (lipAtBottom) {
+          // Dripping downward from top pipe
+          g.roundRect(p.x + p.w * 0.3, lipY + lip, 6, 8 + dripWobble, 3);
+          g.roundRect(p.x + p.w * 0.7, lipY + lip, 4, 5 + dripWobble * 0.6, 2);
+        } else {
+          // Sludge running down bottom pipe
+          g.roundRect(p.x + p.w * 0.25, lipY, 5, 12 + dripWobble, 3);
+          g.roundRect(p.x + p.w * 0.65, lipY, 6, 9 + dripWobble * 0.7, 3);
+        }
+        g.fill();
       };
+
       drawSeg(-20, top + 20, true);
       drawSeg(bot, this.h - bot + 20, false);
+
+      // Wavy stink steam lines coming out of pipe rims
+      g.strokeStyle = "rgba(190, 242, 100, 0.4)";
+      g.lineWidth = 2;
+      g.lineCap = "round";
+      for (let i = 0; i < 2; i++) {
+        const sx = p.x + p.w * (0.35 + i * 0.3);
+        const wave = Math.sin(this.time * 4 + sx) * 6;
+        g.beginPath();
+        g.moveTo(sx, top);
+        g.quadraticCurveTo(sx + wave, top - 14, sx - wave * 0.5, top - 28);
+        g.stroke();
+
+        g.beginPath();
+        g.moveTo(sx, bot);
+        g.quadraticCurveTo(sx - wave, bot + 14, sx + wave * 0.5, bot + 28);
+        g.stroke();
+      }
     }
   }
 
@@ -669,64 +726,141 @@ export class FartGame {
     g.save();
     g.translate(this.px, this.py);
     g.rotate(this.tilt);
-    const pulse = 1 + this.cheekPulse * 0.22;
+    const pulse = 1 + this.cheekPulse * 0.35;
+    const flap = this.wasThrusting ? Math.sin(this.time * 38) * 0.18 : Math.sin(this.time * 4) * 0.04;
 
-    // butt/exhaust glow
+    // 1. Stink aura / green toxic cloud around player
+    const stinkGlow = g.createRadialGradient(0, 0, r * 0.5, 0, 0, r * 2.5);
+    stinkGlow.addColorStop(0, `rgba(163, 230, 53, ${0.15 + this.stinkMeter * 0.25})`);
+    stinkGlow.addColorStop(1, "rgba(163, 230, 53, 0)");
+    g.fillStyle = stinkGlow;
+    g.beginPath();
+    g.arc(0, 0, r * 2.5, 0, 6.2832);
+    g.fill();
+
+    // 2. Butt / Exhaust blast flame glow when tooting
     if (this.wasThrusting) {
-      const glow = g.createRadialGradient(-r * 0.9, r * 0.4, 0, -r * 0.9, r * 0.4, r * 2.2);
-      glow.addColorStop(0, "rgba(190,242,100,0.55)");
-      glow.addColorStop(1, "rgba(190,242,100,0)");
-      g.fillStyle = glow;
+      const blastGrd = g.createRadialGradient(-r * 1.2, r * 0.3, 0, -r * 1.2, r * 0.3, r * 2.8);
+      blastGrd.addColorStop(0, "rgba(253, 224, 71, 0.9)");
+      blastGrd.addColorStop(0.3, "rgba(163, 230, 53, 0.75)");
+      blastGrd.addColorStop(1, "rgba(132, 204, 22, 0)");
+      g.fillStyle = blastGrd;
       g.beginPath();
-      g.arc(-r * 0.9, r * 0.4, r * 2.2, 0, 6.2832);
+      g.arc(-r * 1.2, r * 0.3, r * 2.8, 0, 6.2832);
       g.fill();
     }
 
-    // body
-    const body = g.createRadialGradient(-r * 0.3, -r * 0.4, r * 0.2, 0, 0, r * 1.3);
-    body.addColorStop(0, "#fde68a");
-    body.addColorStop(0.6, "#f59e0b");
+    // 3. Main Mascot Body (Peach Bean Shape)
+    const body = g.createRadialGradient(-r * 0.2, -r * 0.4, r * 0.2, 0, 0, r * 1.4);
+    body.addColorStop(0, "#fef08a");
+    body.addColorStop(0.5, "#f59e0b");
     body.addColorStop(1, "#b45309");
     g.fillStyle = body;
     g.beginPath();
     g.ellipse(0, 0, r * (2 - sq) * pulse, r * sq * pulse, 0, 0, 6.2832);
     g.fill();
     g.lineWidth = 3;
-    g.strokeStyle = "rgba(60,30,0,0.55)";
+    g.strokeStyle = "#451a03";
     g.stroke();
 
-    // cheeks (rear)
-    g.fillStyle = "rgba(180,83,9,0.9)";
+    // 4. PLUMP COMEDIC BUTT CHEEKS (Left Cheek & Right Cheek)
+    // Upper Butt Cheek
+    const upperCheekGrd = g.createRadialGradient(-r * 0.95, -r * 0.05 + flap * r, 0, -r * 0.95, -r * 0.05, r * 0.7);
+    upperCheekGrd.addColorStop(0, "#fde68a");
+    upperCheekGrd.addColorStop(0.6, "#f59e0b");
+    upperCheekGrd.addColorStop(1, "#92400e");
+    g.fillStyle = upperCheekGrd;
     g.beginPath();
-    g.ellipse(-r * 0.78, r * 0.22, r * 0.4, r * 0.42 * pulse, 0, 0, 6.2832);
+    g.ellipse(-r * 0.82, -r * 0.1 + flap * r * 0.5, r * 0.48 * pulse, r * 0.42 * (1 + flap), -0.2, 0, 6.2832);
     g.fill();
+    g.lineWidth = 2.5;
+    g.strokeStyle = "#451a03";
+    g.stroke();
 
-    // eyes
+    // Lower Butt Cheek
+    const lowerCheekGrd = g.createRadialGradient(-r * 0.95, r * 0.38 - flap * r, 0, -r * 0.95, r * 0.38, r * 0.7);
+    lowerCheekGrd.addColorStop(0, "#fde68a");
+    lowerCheekGrd.addColorStop(0.6, "#d97706");
+    lowerCheekGrd.addColorStop(1, "#78350f");
+    g.fillStyle = lowerCheekGrd;
+    g.beginPath();
+    g.ellipse(-r * 0.85, r * 0.34 - flap * r * 0.5, r * 0.52 * pulse, r * 0.46 * (1 - flap), 0.15, 0, 6.2832);
+    g.fill();
+    g.lineWidth = 2.5;
+    g.strokeStyle = "#451a03";
+    g.stroke();
+
+    // Butt Crease / Crack Shadow
+    g.strokeStyle = "#3f1c04";
+    g.lineWidth = 2.8;
+    g.beginPath();
+    g.moveTo(-r * 1.25, r * 0.12);
+    g.quadraticCurveTo(-r * 0.7, r * 0.14, -r * 0.35, r * 0.18);
+    g.stroke();
+
+    // 5. Cartoon Expressive Eyes
     const look = clamp(this.vy / 900, -0.6, 0.6);
     g.fillStyle = "#fff";
     g.beginPath();
-    g.ellipse(r * 0.34, -r * 0.22, r * 0.3, r * 0.33, 0, 0, 6.2832);
-    g.ellipse(r * 0.82, -r * 0.2, r * 0.26, r * 0.3, 0, 0, 6.2832);
+    g.ellipse(r * 0.38, -r * 0.22, r * 0.32, r * 0.35, 0, 0, 6.2832);
+    g.ellipse(r * 0.86, -r * 0.2, r * 0.28, r * 0.32, 0, 0, 6.2832);
     g.fill();
-    g.fillStyle = "#1f2937";
-    g.beginPath();
-    g.arc(r * 0.4, -r * 0.2 + look * r * 0.2, r * 0.14, 0, 6.2832);
-    g.arc(r * 0.86, -r * 0.18 + look * r * 0.2, r * 0.12, 0, 6.2832);
-    g.fill();
-
-    // mouth
-    g.strokeStyle = "#7c2d12";
-    g.lineWidth = 2.5;
-    g.beginPath();
-    if (this.wasThrusting) g.arc(r * 0.6, r * 0.3, r * 0.2, 0, Math.PI);
-    else g.arc(r * 0.6, r * 0.36, r * 0.22, 0.15 * Math.PI, 0.85 * Math.PI);
+    g.lineWidth = 2;
+    g.strokeStyle = "#451a03";
     g.stroke();
 
-    // blush
-    g.fillStyle = "rgba(244,114,182,0.45)";
+    // Pupils (Focus forward or strain when tooting)
+    g.fillStyle = "#111827";
     g.beginPath();
-    g.ellipse(r * 0.2, r * 0.18, r * 0.17, r * 0.11, 0, 0, 6.2832);
+    if (this.wasThrusting) {
+      // Strained funny squished pupils
+      g.ellipse(r * 0.45, -r * 0.2 + look * r * 0.1, r * 0.14, r * 0.08, 0, 0, 6.2832);
+      g.ellipse(r * 0.92, -r * 0.18 + look * r * 0.1, r * 0.13, r * 0.07, 0, 0, 6.2832);
+    } else {
+      g.arc(r * 0.44, -r * 0.2 + look * r * 0.2, r * 0.14, 0, 6.2832);
+      g.arc(r * 0.9, -r * 0.18 + look * r * 0.2, r * 0.13, 0, 6.2832);
+    }
     g.fill();
+
+    // White eye shine glints
+    g.fillStyle = "#fff";
+    g.beginPath();
+    g.arc(r * 0.38, -r * 0.28, r * 0.07, 0, 6.2832);
+    g.arc(r * 0.84, -r * 0.26, r * 0.06, 0, 6.2832);
+    g.fill();
+
+    // 6. Mouth: Straining 'O' shape during tooting, smug smile when gliding
+    g.strokeStyle = "#451a03";
+    g.fillStyle = "#7f1d1d";
+    g.lineWidth = 2.5;
+    g.beginPath();
+    if (this.wasThrusting) {
+      // Open toot strain mouth
+      g.ellipse(r * 0.65, r * 0.3, r * 0.14, r * 0.18, 0, 0, 6.2832);
+      g.fill();
+      g.stroke();
+    } else {
+      g.arc(r * 0.62, r * 0.34, r * 0.22, 0.15 * Math.PI, 0.85 * Math.PI);
+      g.stroke();
+    }
+
+    // 7. Cute blushing cheeks
+    g.fillStyle = "rgba(244,114,182,0.55)";
+    g.beginPath();
+    g.ellipse(r * 0.24, r * 0.18, r * 0.18, r * 0.12, 0, 0, 6.2832);
+    g.fill();
+
+    // 8. Stink steam swirl trailing behind the cheeks
+    if (this.wasThrusting || this.stinkMeter > 0.3) {
+      g.strokeStyle = "rgba(163, 230, 53, 0.65)";
+      g.lineWidth = 2.2;
+      g.beginPath();
+      const steamWave = Math.sin(this.time * 24) * 4;
+      g.moveTo(-r * 1.3, r * 0.2);
+      g.quadraticCurveTo(-r * 1.7 + steamWave, r * 0.05, -r * 2.1, r * 0.35 + steamWave);
+      g.stroke();
+    }
+
     g.restore();
   }
 
