@@ -1,10 +1,8 @@
 import { playBlip, playCrash, playFart, stopThrustFart } from "./audio";
 
 export type GameState = "menu" | "ready" | "playing" | "paused" | "dead";
-export type PaletteMode = "pastel" | "cozy" | "peach" | "toxic";
 
 export interface ThemeColors {
-  name: string;
   skyTop: string;
   skyMid: string;
   skyBot: string;
@@ -23,83 +21,24 @@ export interface ThemeColors {
   hudStroke: string;
 }
 
-export const THEMES: Record<PaletteMode, ThemeColors> = {
-  pastel: {
-    name: "🌸 Pastel Bloom",
-    skyTop: "#475569",
-    skyMid: "#64748b",
-    skyBot: "#94a3b8",
-    pipeGrd: ["#78716c", "#a8a29e", "#d6d3d1", "#78716c"],
-    pipeLip: ["#78716c", "#e7e5e4", "#57534e"],
-    sludge: "rgba(244, 114, 182, 0.75)", // pastel blush pink drip
-    steam: "rgba(244, 114, 182, 0.4)",
-    beanNormal: ["#c4b5fd", "#8b5cf6"], // soft lavender
-    beanBig: ["#fbcfe8", "#f43f5e"], // soft rose
-    playerBody: ["#fed7aa", "#fb923c", "#c2410c"],
-    playerCheekUpper: ["#fed7aa", "#f472b6", "#be185d"],
-    playerCheekLower: ["#fed7aa", "#fb7185", "#9f1239"],
-    thrustGlow: ["rgba(244, 114, 182, 0.7)", "rgba(192, 132, 252, 0)"],
-    stinkAura: "rgba(244, 114, 182, 0.22)",
-    hudText: "#f1f5f9",
-    hudStroke: "rgba(15, 23, 42, 0.7)",
-  },
-  cozy: {
-    name: "☕ Cozy Earth",
-    skyTop: "#3e322b",
-    skyMid: "#584439",
-    skyBot: "#7a5c4d",
-    pipeGrd: ["#443831", "#786357", "#a89080", "#443831"],
-    pipeLip: ["#5c4a3f", "#c4b0a1", "#382c25"],
-    sludge: "rgba(217, 119, 6, 0.8)",
-    steam: "rgba(251, 191, 36, 0.35)",
-    beanNormal: ["#fed7aa", "#d97706"],
-    beanBig: ["#fca5a5", "#dc2626"],
-    playerBody: ["#ffedd5", "#f59e0b", "#b45309"],
-    playerCheekUpper: ["#ffedd5", "#fb923c", "#9a3412"],
-    playerCheekLower: ["#ffedd5", "#ea580c", "#7c2d12"],
-    thrustGlow: ["rgba(251, 191, 36, 0.7)", "rgba(217, 119, 6, 0)"],
-    stinkAura: "rgba(251, 191, 36, 0.2)",
-    hudText: "#fef3c7",
-    hudStroke: "rgba(40, 25, 15, 0.75)",
-  },
-  peach: {
-    name: "🍑 Soft Peach",
-    skyTop: "#4a3b47",
-    skyMid: "#6b4f62",
-    skyBot: "#946f84",
-    pipeGrd: ["#63535f", "#9c8495", "#c9b6c4", "#63535f"],
-    pipeLip: ["#544350", "#dfd0db", "#3c2f39"],
-    sludge: "rgba(251, 146, 60, 0.8)",
-    steam: "rgba(253, 164, 175, 0.4)",
-    beanNormal: ["#fed7aa", "#f97316"],
-    beanBig: ["#fda4af", "#e11d48"],
-    playerBody: ["#fef08a", "#fb923c", "#b45309"],
-    playerCheekUpper: ["#fef08a", "#f472b6", "#9d174d"],
-    playerCheekLower: ["#fef08a", "#fb7185", "#881337"],
-    thrustGlow: ["rgba(251, 146, 60, 0.7)", "rgba(244, 114, 182, 0)"],
-    stinkAura: "rgba(253, 164, 175, 0.22)",
-    hudText: "#fff1f2",
-    hudStroke: "rgba(35, 20, 30, 0.7)",
-  },
-  toxic: {
-    name: "🧪 Biohazard (Neon)",
-    skyTop: "#1e2c34",
-    skyMid: "#22403a",
-    skyBot: "#3a563c",
-    pipeGrd: ["#2d4a22", "#598a3e", "#84cc16", "#1c2e15"],
-    pipeLip: ["#365314", "#a3e635", "#1a2e05"],
-    sludge: "rgba(163, 230, 53, 0.85)",
-    steam: "rgba(190, 242, 100, 0.4)",
-    beanNormal: ["#d9f99d", "#65a30d"],
-    beanBig: ["#fca5a5", "#b91c1c"],
-    playerBody: ["#fef08a", "#f59e0b", "#b45309"],
-    playerCheekUpper: ["#fde68a", "#f59e0b", "#92400e"],
-    playerCheekLower: ["#fde68a", "#d97706", "#78350f"],
-    thrustGlow: ["rgba(253, 224, 71, 0.9)", "rgba(132, 204, 22, 0)"],
-    stinkAura: "rgba(163, 230, 53, 0.25)",
-    hudText: "#ecfccb",
-    hudStroke: "rgba(15, 25, 12, 0.75)",
-  },
+// Dedicated refined Biohazard theme (Dark tactical industrial, matte olive/steel, tasteful toxic accents)
+export const BIOHAZARD_THEME: ThemeColors = {
+  skyTop: "#0f1712",
+  skyMid: "#15201a",
+  skyBot: "#1c2a22",
+  pipeGrd: ["#1e2920", "#334437", "#475c4c", "#1a251b"],
+  pipeLip: ["#2d3b2f", "#5c7562", "#18221a"],
+  sludge: "rgba(132, 204, 22, 0.75)",
+  steam: "rgba(163, 230, 53, 0.3)",
+  beanNormal: ["#bef264", "#65a30d"],
+  beanBig: ["#fca5a5", "#b91c1c"],
+  playerBody: ["#fef08a", "#eab308", "#854d0e"],
+  playerCheekUpper: ["#fef08a", "#f59e0b", "#78350f"],
+  playerCheekLower: ["#fef08a", "#d97706", "#713f12"],
+  thrustGlow: ["rgba(234, 179, 8, 0.7)", "rgba(132, 204, 22, 0)"],
+  stinkAura: "rgba(132, 204, 22, 0.18)",
+  hudText: "#f7fee7",
+  hudStroke: "rgba(10, 15, 10, 0.85)",
 };
 
 export interface HudSnapshot {
@@ -186,16 +125,11 @@ export class FartGame {
   dpr = 1;
 
   state: GameState = "menu";
-  paletteMode: PaletteMode = "pastel";
   onState: (s: GameState, score: number) => void = () => {};
   onHud: (h: HudSnapshot) => void = () => {};
 
-  setTheme(m: PaletteMode) {
-    this.paletteMode = m;
-  }
-
   get theme(): ThemeColors {
-    return THEMES[this.paletteMode] || THEMES.pastel;
+    return BIOHAZARD_THEME;
   }
 
   // player
