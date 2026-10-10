@@ -1,0 +1,14 @@
+{
+  "appId": "com.fartsimulator.game",
+  "appName": "Fart Simulator",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "allowMixedContent": true,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  }
+}
