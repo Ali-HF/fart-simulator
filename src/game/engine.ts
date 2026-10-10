@@ -1,6 +1,106 @@
 import { playBlip, playCrash, playFart, stopThrustFart } from "./audio";
 
 export type GameState = "menu" | "ready" | "playing" | "paused" | "dead";
+export type PaletteMode = "pastel" | "cozy" | "peach" | "toxic";
+
+export interface ThemeColors {
+  name: string;
+  skyTop: string;
+  skyMid: string;
+  skyBot: string;
+  pipeGrd: [string, string, string, string];
+  pipeLip: [string, string, string];
+  sludge: string;
+  steam: string;
+  beanNormal: [string, string];
+  beanBig: [string, string];
+  playerBody: [string, string, string];
+  playerCheekUpper: [string, string, string];
+  playerCheekLower: [string, string, string];
+  thrustGlow: [string, string];
+  stinkAura: string;
+  hudText: string;
+  hudStroke: string;
+}
+
+export const THEMES: Record<PaletteMode, ThemeColors> = {
+  pastel: {
+    name: "🌸 Pastel Bloom",
+    skyTop: "#475569",
+    skyMid: "#64748b",
+    skyBot: "#94a3b8",
+    pipeGrd: ["#78716c", "#a8a29e", "#d6d3d1", "#78716c"],
+    pipeLip: ["#78716c", "#e7e5e4", "#57534e"],
+    sludge: "rgba(244, 114, 182, 0.75)", // pastel blush pink drip
+    steam: "rgba(244, 114, 182, 0.4)",
+    beanNormal: ["#c4b5fd", "#8b5cf6"], // soft lavender
+    beanBig: ["#fbcfe8", "#f43f5e"], // soft rose
+    playerBody: ["#fed7aa", "#fb923c", "#c2410c"],
+    playerCheekUpper: ["#fed7aa", "#f472b6", "#be185d"],
+    playerCheekLower: ["#fed7aa", "#fb7185", "#9f1239"],
+    thrustGlow: ["rgba(244, 114, 182, 0.7)", "rgba(192, 132, 252, 0)"],
+    stinkAura: "rgba(244, 114, 182, 0.22)",
+    hudText: "#f1f5f9",
+    hudStroke: "rgba(15, 23, 42, 0.7)",
+  },
+  cozy: {
+    name: "☕ Cozy Earth",
+    skyTop: "#3e322b",
+    skyMid: "#584439",
+    skyBot: "#7a5c4d",
+    pipeGrd: ["#443831", "#786357", "#a89080", "#443831"],
+    pipeLip: ["#5c4a3f", "#c4b0a1", "#382c25"],
+    sludge: "rgba(217, 119, 6, 0.8)",
+    steam: "rgba(251, 191, 36, 0.35)",
+    beanNormal: ["#fed7aa", "#d97706"],
+    beanBig: ["#fca5a5", "#dc2626"],
+    playerBody: ["#ffedd5", "#f59e0b", "#b45309"],
+    playerCheekUpper: ["#ffedd5", "#fb923c", "#9a3412"],
+    playerCheekLower: ["#ffedd5", "#ea580c", "#7c2d12"],
+    thrustGlow: ["rgba(251, 191, 36, 0.7)", "rgba(217, 119, 6, 0)"],
+    stinkAura: "rgba(251, 191, 36, 0.2)",
+    hudText: "#fef3c7",
+    hudStroke: "rgba(40, 25, 15, 0.75)",
+  },
+  peach: {
+    name: "🍑 Soft Peach",
+    skyTop: "#4a3b47",
+    skyMid: "#6b4f62",
+    skyBot: "#946f84",
+    pipeGrd: ["#63535f", "#9c8495", "#c9b6c4", "#63535f"],
+    pipeLip: ["#544350", "#dfd0db", "#3c2f39"],
+    sludge: "rgba(251, 146, 60, 0.8)",
+    steam: "rgba(253, 164, 175, 0.4)",
+    beanNormal: ["#fed7aa", "#f97316"],
+    beanBig: ["#fda4af", "#e11d48"],
+    playerBody: ["#fef08a", "#fb923c", "#b45309"],
+    playerCheekUpper: ["#fef08a", "#f472b6", "#9d174d"],
+    playerCheekLower: ["#fef08a", "#fb7185", "#881337"],
+    thrustGlow: ["rgba(251, 146, 60, 0.7)", "rgba(244, 114, 182, 0)"],
+    stinkAura: "rgba(253, 164, 175, 0.22)",
+    hudText: "#fff1f2",
+    hudStroke: "rgba(35, 20, 30, 0.7)",
+  },
+  toxic: {
+    name: "🧪 Biohazard (Neon)",
+    skyTop: "#1e2c34",
+    skyMid: "#22403a",
+    skyBot: "#3a563c",
+    pipeGrd: ["#2d4a22", "#598a3e", "#84cc16", "#1c2e15"],
+    pipeLip: ["#365314", "#a3e635", "#1a2e05"],
+    sludge: "rgba(163, 230, 53, 0.85)",
+    steam: "rgba(190, 242, 100, 0.4)",
+    beanNormal: ["#d9f99d", "#65a30d"],
+    beanBig: ["#fca5a5", "#b91c1c"],
+    playerBody: ["#fef08a", "#f59e0b", "#b45309"],
+    playerCheekUpper: ["#fde68a", "#f59e0b", "#92400e"],
+    playerCheekLower: ["#fde68a", "#d97706", "#78350f"],
+    thrustGlow: ["rgba(253, 224, 71, 0.9)", "rgba(132, 204, 22, 0)"],
+    stinkAura: "rgba(163, 230, 53, 0.25)",
+    hudText: "#ecfccb",
+    hudStroke: "rgba(15, 25, 12, 0.75)",
+  },
+};
 
 export interface HudSnapshot {
   score: number;
@@ -86,8 +186,17 @@ export class FartGame {
   dpr = 1;
 
   state: GameState = "menu";
+  paletteMode: PaletteMode = "pastel";
   onState: (s: GameState, score: number) => void = () => {};
   onHud: (h: HudSnapshot) => void = () => {};
+
+  setTheme(m: PaletteMode) {
+    this.paletteMode = m;
+  }
+
+  get theme(): ThemeColors {
+    return THEMES[this.paletteMode] || THEMES.pastel;
+  }
 
   // player
   px = 0;
@@ -515,15 +624,15 @@ export class FartGame {
     const g = this.ctx;
     const w = this.w;
     const h = this.h;
+    const theme = this.theme;
     this.shakeX = (Math.random() - 0.5) * this.shake;
     this.shakeY = (Math.random() - 0.5) * this.shake;
 
-    // sky
+    // sky gradient with theme
     const sky = g.createLinearGradient(0, 0, 0, h);
-    const s = this.stinkMeter;
-    sky.addColorStop(0, `rgb(${30 + s * 10}, ${44 + s * 26}, ${52})`);
-    sky.addColorStop(0.55, `rgb(${34 + s * 24}, ${64 + s * 40}, ${58})`);
-    sky.addColorStop(1, `rgb(${58 + s * 30}, ${86 + s * 40}, ${60})`);
+    sky.addColorStop(0, theme.skyTop);
+    sky.addColorStop(0.55, theme.skyMid);
+    sky.addColorStop(1, theme.skyBot);
     g.fillStyle = sky;
     g.fillRect(0, 0, w, h);
 
@@ -533,8 +642,8 @@ export class FartGame {
     // haze clouds
     for (const c of this.clouds) {
       const grd = g.createRadialGradient(c.x, c.y, 0, c.x, c.y, c.r);
-      grd.addColorStop(0, `rgba(170, 220, 120, ${c.a})`);
-      grd.addColorStop(1, "rgba(170, 220, 120, 0)");
+      grd.addColorStop(0, `rgba(255, 255, 255, ${c.a * 0.7})`);
+      grd.addColorStop(1, "rgba(255, 255, 255, 0)");
       g.fillStyle = grd;
       g.beginPath();
       g.arc(c.x, c.y, c.r, 0, 6.2832);
@@ -545,7 +654,7 @@ export class FartGame {
     const tile = 60;
     const off = (this.distance * 0.35) % tile;
     g.globalAlpha = 0.12;
-    g.fillStyle = "#eafbd0";
+    g.fillStyle = theme.hudText;
     for (let x = -off; x < w; x += tile) g.fillRect(x, h - 26, tile * 0.5, 26);
     g.globalAlpha = 1;
 
@@ -558,36 +667,36 @@ export class FartGame {
     g.restore();
 
     // ground line
-    g.fillStyle = "rgba(20,30,18,0.65)";
+    g.fillStyle = "rgba(20,25,30,0.5)";
     g.fillRect(0, h - 6, w, 6);
 
     this.drawHud(g);
 
     // flash + vignette
     if (this.flash > 0.01) {
-      g.fillStyle = `rgba(220, 255, 180, ${this.flash * 0.35})`;
+      g.fillStyle = `rgba(255, 255, 255, ${this.flash * 0.35})`;
       g.fillRect(0, 0, w, h);
     }
     const vig = g.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.35, w / 2, h / 2, Math.max(w, h) * 0.75);
     vig.addColorStop(0, "rgba(0,0,0,0)");
-    vig.addColorStop(1, "rgba(0,0,0,0.45)");
+    vig.addColorStop(1, "rgba(0,0,0,0.4)");
     g.fillStyle = vig;
     g.fillRect(0, 0, w, h);
   }
 
   drawPipes(g: CanvasRenderingContext2D) {
+    const theme = this.theme;
     for (const p of this.pipes) {
       const top = p.gapY - p.gapH / 2;
       const bot = p.gapY + p.gapH / 2;
       const lip = 18;
 
-      // Pipe gradient: gross toxic sewer green & rusty industrial steel
+      // Pipe gradient from theme
       const grd = g.createLinearGradient(p.x, 0, p.x + p.w, 0);
-      grd.addColorStop(0, "#2d4a22");
-      grd.addColorStop(0.25, "#598a3e");
-      grd.addColorStop(0.5, "#84cc16");
-      grd.addColorStop(0.85, "#3f6212");
-      grd.addColorStop(1, "#1c2e15");
+      grd.addColorStop(0, theme.pipeGrd[0]);
+      grd.addColorStop(0.3, theme.pipeGrd[1]);
+      grd.addColorStop(0.7, theme.pipeGrd[2]);
+      grd.addColorStop(1, theme.pipeGrd[3]);
 
       const drawSeg = (y: number, hh: number, lipAtBottom: boolean) => {
         // Main pipe shaft
@@ -599,40 +708,40 @@ export class FartGame {
         // Pipe rim / lip
         const lipY = lipAtBottom ? y + hh - lip : y;
         const lipGrd = g.createLinearGradient(p.x, 0, p.x + p.w, 0);
-        lipGrd.addColorStop(0, "#365314");
-        lipGrd.addColorStop(0.4, "#a3e635");
-        lipGrd.addColorStop(1, "#1a2e05");
+        lipGrd.addColorStop(0, theme.pipeLip[0]);
+        lipGrd.addColorStop(0.4, theme.pipeLip[1]);
+        lipGrd.addColorStop(1, theme.pipeLip[2]);
         g.fillStyle = lipGrd;
         g.beginPath();
         g.roundRect(p.x - 3, lipY, p.w + 6, lip, 8);
         g.fill();
-        g.strokeStyle = "rgba(10,25,5,0.7)";
+        g.strokeStyle = "rgba(10,20,30,0.45)";
         g.lineWidth = 2.5;
         g.stroke();
 
         // Pipe inner darkness / opening
-        g.fillStyle = "#0a1208";
+        g.fillStyle = "rgba(15, 23, 42, 0.85)";
         g.beginPath();
         g.ellipse(p.x + p.w / 2, lipAtBottom ? lipY + lip - 2 : lipY + 2, (p.w + 2) * 0.45, 4, 0, 0, 6.2832);
         g.fill();
 
-        // Stinky biohazard sewer rivets / bolts
-        g.fillStyle = "#fef08a";
+        // Screws / rivets
+        g.fillStyle = theme.hudText;
+        g.globalAlpha = 0.6;
         g.beginPath();
         g.arc(p.x + 4, lipY + lip / 2, 2, 0, 6.2832);
         g.arc(p.x + p.w - 4, lipY + lip / 2, 2, 0, 6.2832);
         g.fill();
+        g.globalAlpha = 1;
 
-        // Gross dripping toxic sludge drops
+        // Dripping sludge
         const dripWobble = Math.sin(this.time * 3 + p.wobble) * 4;
-        g.fillStyle = "rgba(163, 230, 53, 0.85)";
+        g.fillStyle = theme.sludge;
         g.beginPath();
         if (lipAtBottom) {
-          // Dripping downward from top pipe
           g.roundRect(p.x + p.w * 0.3, lipY + lip, 6, 8 + dripWobble, 3);
           g.roundRect(p.x + p.w * 0.7, lipY + lip, 4, 5 + dripWobble * 0.6, 2);
         } else {
-          // Sludge running down bottom pipe
           g.roundRect(p.x + p.w * 0.25, lipY, 5, 12 + dripWobble, 3);
           g.roundRect(p.x + p.w * 0.65, lipY, 6, 9 + dripWobble * 0.7, 3);
         }
@@ -642,8 +751,8 @@ export class FartGame {
       drawSeg(-20, top + 20, true);
       drawSeg(bot, this.h - bot + 20, false);
 
-      // Wavy stink steam lines coming out of pipe rims
-      g.strokeStyle = "rgba(190, 242, 100, 0.4)";
+      // Wavy steam lines
+      g.strokeStyle = theme.steam;
       g.lineWidth = 2;
       g.lineCap = "round";
       for (let i = 0; i < 2; i++) {
@@ -663,6 +772,7 @@ export class FartGame {
   }
 
   drawBeans(g: CanvasRenderingContext2D) {
+    const theme = this.theme;
     for (const b of this.beans) {
       const r = b.big ? 18 : 11;
       const bob = Math.sin(b.t) * 4;
@@ -671,20 +781,17 @@ export class FartGame {
       g.rotate(Math.sin(b.t * 0.6) * 0.4);
       const grd = g.createLinearGradient(-r, -r, r, r);
       if (b.big) {
-        grd.addColorStop(0, "#fca5a5");
-        grd.addColorStop(1, "#b91c1c");
+        grd.addColorStop(0, theme.beanBig[0]);
+        grd.addColorStop(1, theme.beanBig[1]);
       } else {
-        grd.addColorStop(0, "#d9f99d");
-        grd.addColorStop(1, "#65a30d");
+        grd.addColorStop(0, theme.beanNormal[0]);
+        grd.addColorStop(1, theme.beanNormal[1]);
       }
       g.fillStyle = grd;
-      g.shadowColor = b.big ? "rgba(248,113,113,0.8)" : "rgba(163,230,53,0.7)";
-      g.shadowBlur = 14;
       g.beginPath();
       g.ellipse(0, 0, r, r * 0.74, 0, 0, 6.2832);
       g.fill();
-      g.shadowBlur = 0;
-      g.fillStyle = "rgba(255,255,255,0.75)";
+      g.fillStyle = "rgba(255,255,255,0.65)";
       g.beginPath();
       g.ellipse(-r * 0.3, -r * 0.28, r * 0.26, r * 0.16, -0.5, 0, 6.2832);
       g.fill();
@@ -723,16 +830,17 @@ export class FartGame {
   drawPlayer(g: CanvasRenderingContext2D) {
     const r = this.radius;
     const sq = this.squash;
+    const theme = this.theme;
     g.save();
     g.translate(this.px, this.py);
     g.rotate(this.tilt);
     const pulse = 1 + this.cheekPulse * 0.35;
     const flap = this.wasThrusting ? Math.sin(this.time * 38) * 0.18 : Math.sin(this.time * 4) * 0.04;
 
-    // 1. Stink aura / green toxic cloud around player
+    // 1. Stink aura / cloud around player
     const stinkGlow = g.createRadialGradient(0, 0, r * 0.5, 0, 0, r * 2.5);
-    stinkGlow.addColorStop(0, `rgba(163, 230, 53, ${0.15 + this.stinkMeter * 0.25})`);
-    stinkGlow.addColorStop(1, "rgba(163, 230, 53, 0)");
+    stinkGlow.addColorStop(0, theme.stinkAura);
+    stinkGlow.addColorStop(1, "rgba(255, 255, 255, 0)");
     g.fillStyle = stinkGlow;
     g.beginPath();
     g.arc(0, 0, r * 2.5, 0, 6.2832);
@@ -741,58 +849,57 @@ export class FartGame {
     // 2. Butt / Exhaust blast flame glow when tooting
     if (this.wasThrusting) {
       const blastGrd = g.createRadialGradient(-r * 1.2, r * 0.3, 0, -r * 1.2, r * 0.3, r * 2.8);
-      blastGrd.addColorStop(0, "rgba(253, 224, 71, 0.9)");
-      blastGrd.addColorStop(0.3, "rgba(163, 230, 53, 0.75)");
-      blastGrd.addColorStop(1, "rgba(132, 204, 22, 0)");
+      blastGrd.addColorStop(0, theme.thrustGlow[0]);
+      blastGrd.addColorStop(1, theme.thrustGlow[1]);
       g.fillStyle = blastGrd;
       g.beginPath();
       g.arc(-r * 1.2, r * 0.3, r * 2.8, 0, 6.2832);
       g.fill();
     }
 
-    // 3. Main Mascot Body (Peach Bean Shape)
+    // 3. Main Mascot Body
     const body = g.createRadialGradient(-r * 0.2, -r * 0.4, r * 0.2, 0, 0, r * 1.4);
-    body.addColorStop(0, "#fef08a");
-    body.addColorStop(0.5, "#f59e0b");
-    body.addColorStop(1, "#b45309");
+    body.addColorStop(0, theme.playerBody[0]);
+    body.addColorStop(0.5, theme.playerBody[1]);
+    body.addColorStop(1, theme.playerBody[2]);
     g.fillStyle = body;
     g.beginPath();
     g.ellipse(0, 0, r * (2 - sq) * pulse, r * sq * pulse, 0, 0, 6.2832);
     g.fill();
-    g.lineWidth = 3;
-    g.strokeStyle = "#451a03";
+    g.lineWidth = 2.5;
+    g.strokeStyle = "#332219";
     g.stroke();
 
-    // 4. PLUMP COMEDIC BUTT CHEEKS (Left Cheek & Right Cheek)
+    // 4. PLUMP COMEDIC BUTT CHEEKS
     // Upper Butt Cheek
     const upperCheekGrd = g.createRadialGradient(-r * 0.95, -r * 0.05 + flap * r, 0, -r * 0.95, -r * 0.05, r * 0.7);
-    upperCheekGrd.addColorStop(0, "#fde68a");
-    upperCheekGrd.addColorStop(0.6, "#f59e0b");
-    upperCheekGrd.addColorStop(1, "#92400e");
+    upperCheekGrd.addColorStop(0, theme.playerCheekUpper[0]);
+    upperCheekGrd.addColorStop(0.6, theme.playerCheekUpper[1]);
+    upperCheekGrd.addColorStop(1, theme.playerCheekUpper[2]);
     g.fillStyle = upperCheekGrd;
     g.beginPath();
     g.ellipse(-r * 0.82, -r * 0.1 + flap * r * 0.5, r * 0.48 * pulse, r * 0.42 * (1 + flap), -0.2, 0, 6.2832);
     g.fill();
-    g.lineWidth = 2.5;
-    g.strokeStyle = "#451a03";
+    g.lineWidth = 2.2;
+    g.strokeStyle = "#332219";
     g.stroke();
 
     // Lower Butt Cheek
     const lowerCheekGrd = g.createRadialGradient(-r * 0.95, r * 0.38 - flap * r, 0, -r * 0.95, r * 0.38, r * 0.7);
-    lowerCheekGrd.addColorStop(0, "#fde68a");
-    lowerCheekGrd.addColorStop(0.6, "#d97706");
-    lowerCheekGrd.addColorStop(1, "#78350f");
+    lowerCheekGrd.addColorStop(0, theme.playerCheekLower[0]);
+    lowerCheekGrd.addColorStop(0.6, theme.playerCheekLower[1]);
+    lowerCheekGrd.addColorStop(1, theme.playerCheekLower[2]);
     g.fillStyle = lowerCheekGrd;
     g.beginPath();
     g.ellipse(-r * 0.85, r * 0.34 - flap * r * 0.5, r * 0.52 * pulse, r * 0.46 * (1 - flap), 0.15, 0, 6.2832);
     g.fill();
-    g.lineWidth = 2.5;
-    g.strokeStyle = "#451a03";
+    g.lineWidth = 2.2;
+    g.strokeStyle = "#332219";
     g.stroke();
 
-    // Butt Crease / Crack Shadow
-    g.strokeStyle = "#3f1c04";
-    g.lineWidth = 2.8;
+    // Butt Crease
+    g.strokeStyle = "#2e1a12";
+    g.lineWidth = 2.5;
     g.beginPath();
     g.moveTo(-r * 1.25, r * 0.12);
     g.quadraticCurveTo(-r * 0.7, r * 0.14, -r * 0.35, r * 0.18);
@@ -806,14 +913,13 @@ export class FartGame {
     g.ellipse(r * 0.86, -r * 0.2, r * 0.28, r * 0.32, 0, 0, 6.2832);
     g.fill();
     g.lineWidth = 2;
-    g.strokeStyle = "#451a03";
+    g.strokeStyle = "#332219";
     g.stroke();
 
-    // Pupils (Focus forward or strain when tooting)
-    g.fillStyle = "#111827";
+    // Pupils
+    g.fillStyle = "#1e293b";
     g.beginPath();
     if (this.wasThrusting) {
-      // Strained funny squished pupils
       g.ellipse(r * 0.45, -r * 0.2 + look * r * 0.1, r * 0.14, r * 0.08, 0, 0, 6.2832);
       g.ellipse(r * 0.92, -r * 0.18 + look * r * 0.1, r * 0.13, r * 0.07, 0, 0, 6.2832);
     } else {
@@ -822,20 +928,19 @@ export class FartGame {
     }
     g.fill();
 
-    // White eye shine glints
+    // Eye shine glints
     g.fillStyle = "#fff";
     g.beginPath();
     g.arc(r * 0.38, -r * 0.28, r * 0.07, 0, 6.2832);
     g.arc(r * 0.84, -r * 0.26, r * 0.06, 0, 6.2832);
     g.fill();
 
-    // 6. Mouth: Straining 'O' shape during tooting, smug smile when gliding
-    g.strokeStyle = "#451a03";
-    g.fillStyle = "#7f1d1d";
-    g.lineWidth = 2.5;
+    // 6. Mouth
+    g.strokeStyle = "#332219";
+    g.fillStyle = "#881337";
+    g.lineWidth = 2.2;
     g.beginPath();
     if (this.wasThrusting) {
-      // Open toot strain mouth
       g.ellipse(r * 0.65, r * 0.3, r * 0.14, r * 0.18, 0, 0, 6.2832);
       g.fill();
       g.stroke();
@@ -845,14 +950,14 @@ export class FartGame {
     }
 
     // 7. Cute blushing cheeks
-    g.fillStyle = "rgba(244,114,182,0.55)";
+    g.fillStyle = "rgba(251,113,133,0.45)";
     g.beginPath();
     g.ellipse(r * 0.24, r * 0.18, r * 0.18, r * 0.12, 0, 0, 6.2832);
     g.fill();
 
-    // 8. Stink steam swirl trailing behind the cheeks
+    // 8. Stink steam swirl
     if (this.wasThrusting || this.stinkMeter > 0.3) {
-      g.strokeStyle = "rgba(163, 230, 53, 0.65)";
+      g.strokeStyle = theme.steam;
       g.lineWidth = 2.2;
       g.beginPath();
       const steamWave = Math.sin(this.time * 24) * 4;
@@ -882,15 +987,16 @@ export class FartGame {
 
   drawHud(g: CanvasRenderingContext2D) {
     if (this.state === "menu" || this.state === "ready") return;
+    const theme = this.theme;
     const pad = 16;
     // score
     g.font = `900 ${clamp(this.h * 0.065, 26, 44)}px ui-rounded, "Trebuchet MS", system-ui, sans-serif`;
     g.textAlign = "left";
     g.lineWidth = 6;
-    g.strokeStyle = "rgba(15,25,12,0.75)";
+    g.strokeStyle = theme.hudStroke;
     const sTxt = String(Math.floor(this.score));
     g.strokeText(sTxt, pad, pad + clamp(this.h * 0.06, 26, 42));
-    g.fillStyle = "#ecfccb";
+    g.fillStyle = theme.hudText;
     g.fillText(sTxt, pad, pad + clamp(this.h * 0.06, 26, 42));
 
     if (this.combo > 1) {
@@ -899,12 +1005,12 @@ export class FartGame {
       const y = pad + clamp(this.h * 0.06, 26, 42) + 26;
       g.lineWidth = 5;
       g.strokeText(ct, pad, y);
-      g.fillStyle = `hsl(${60 + this.combo * 8}, 95%, 65%)`;
+      g.fillStyle = "#fbcfe8";
       g.fillText(ct, pad, y);
       // combo timer bar
       g.fillStyle = "rgba(255,255,255,0.25)";
       g.fillRect(pad, y + 8, 90, 4);
-      g.fillStyle = "#fbbf24";
+      g.fillStyle = "#f472b6";
       g.fillRect(pad, y + 8, 90 * clamp(this.comboTimer / 3.4, 0, 1), 4);
     }
 
@@ -913,19 +1019,31 @@ export class FartGame {
     const bh = 16;
     const bx = this.w - bw - pad;
     const by = pad + 6;
-    g.fillStyle = "rgba(10,20,10,0.55)";
+    g.fillStyle = "rgba(15,23,42,0.6)";
     g.beginPath();
     g.roundRect(bx - 3, by - 3, bw + 6, bh + 6, 10);
     g.fill();
-    const gg = g.createLinearGradient(bx, 0, bx + bw, 0);
-    gg.addColorStop(0, this.gas < 25 ? "#f87171" : "#a3e635");
-    gg.addColorStop(1, this.gas < 25 ? "#fbbf24" : "#4ade80");
-    g.fillStyle = gg;
+    g.strokeStyle = "rgba(255,255,255,0.15)";
+    g.lineWidth = 2;
+    g.stroke();
+
+    const gFill = clamp(this.gas / 100, 0, 1);
+    const gGrd = g.createLinearGradient(bx, 0, bx + bw, 0);
+    if (this.gas < 25) {
+      gGrd.addColorStop(0, "#ef4444");
+      gGrd.addColorStop(1, "#f87171");
+    } else {
+      gGrd.addColorStop(0, theme.beanNormal[0]);
+      gGrd.addColorStop(1, theme.beanNormal[1]);
+    }
+    g.fillStyle = gGrd;
     g.beginPath();
-    g.roundRect(bx, by, Math.max(2, (bw * this.gas) / 100), bh, 8);
+    g.roundRect(bx, by, bw * gFill, bh, 8);
     g.fill();
+  }
+
     g.font = `800 12px ui-rounded, "Trebuchet MS", system-ui, sans-serif`;
-    g.fillStyle = "rgba(236,252,203,0.9)";
+    g.fillStyle = theme.hudText;
     g.textAlign = "right";
     g.fillText("GAS", bx + bw, by + bh + 15);
     g.textAlign = "left";

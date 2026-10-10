@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { FartGame, type GameState, type HudSnapshot } from "./game/engine";
+import { FartGame, type GameState, type HudSnapshot, type PaletteMode, THEMES } from "./game/engine";
 import { clearScores, loadScores, rankFor, saveScore, type ScoreEntry } from "./game/scores";
-import { isMuted, playFart, setMuted, triggerHaptic, unlockAudio } from "./game/audio";
+import { isMuted, setMuted, triggerHaptic, unlockAudio } from "./game/audio";
 
 export default function App() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const gameRef = useRef<FartGame | null>(null);
   const deadAtRef = useRef(0);
-  const getReadyTimerRef = useRef<number | null>(null);
 
   const [state, setState] = useState<GameState>("menu");
   const [hud, setHud] = useState<HudSnapshot>({ score: 0, best: 0, combo: 1, gas: 100 });
@@ -15,7 +14,9 @@ export default function App() {
   const [scores, setScores] = useState<ScoreEntry[]>([]);
   const [muted, setMutedState] = useState(false);
   const [isNewBest, setIsNewBest] = useState(false);
+  const [palette, setPalette] = useState<PaletteMode>("pastel");
   const [showHowTo, setShowHowTo] = useState(false);
+  const [showThemePicker, setShowThemePicker] = useState(false);
 
   useEffect(() => {
     setScores(loadScores());
@@ -26,6 +27,7 @@ export default function App() {
     const canvas = canvasRef.current!;
     const game = new FartGame(canvas);
     gameRef.current = game;
+    game.setTheme(palette);
     game.best = loadScores()[0]?.score ?? 0;
     game.onHud = setHud;
     game.onState = (s, score) => {
@@ -46,11 +48,19 @@ export default function App() {
     ro.observe(canvas);
     return () => {
       ro.disconnect();
-      if (getReadyTimerRef.current) clearTimeout(getReadyTimerRef.current);
       game.unmount();
       gameRef.current = null;
     };
   }, []);
+
+  const changePalette = (mode: PaletteMode) => {
+    setPalette(mode);
+    if (gameRef.current) {
+      gameRef.current.setTheme(mode);
+    }
+    triggerHaptic("light");
+    setShowThemePicker(false);
+  };
 
   // Instant start when clicking Let It Rip or Try Again
   const launchGame = useCallback(() => {
@@ -147,31 +157,54 @@ export default function App() {
   const gasLow = hud.gas < 25;
 
   return (
-    <div className="relative flex h-full w-full select-none flex-col overflow-hidden bg-[#0a100a] text-white">
+    <div
+      className={`relative flex h-full w-full select-none flex-col overflow-hidden text-slate-100 transition-colors duration-300 ${
+        palette === "pastel"
+          ? "bg-[#1e293b]"
+          : palette === "cozy"
+          ? "bg-[#271d18]"
+          : palette === "peach"
+          ? "bg-[#2b1f28]"
+          : "bg-[#0d140e]"
+      }`}
+    >
       {/* Top Status Header */}
-      <header className="z-20 flex h-14 shrink-0 items-center justify-between border-b border-lime-500/15 bg-black/60 px-4 backdrop-blur-md">
+      <header className="z-20 flex h-14 shrink-0 items-center justify-between border-b border-white/10 bg-black/40 px-4 backdrop-blur-md">
         <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-lime-500/20 text-lg shadow-[inset_0_0_8px_rgba(163,230,53,0.3)]">
-            💨
+          <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 text-lg shadow-sm">
+            🍑
           </span>
           <div>
-            <h1 className="text-sm font-black tracking-wide text-lime-400">FART SIMULATOR</h1>
-            <p className="text-[10px] font-bold text-lime-200/60">Hold to Toot &amp; Float</p>
+            <h1 className="text-sm font-bold tracking-tight text-white">FART SIMULATOR</h1>
+            <p className="text-[10px] font-medium text-slate-300/70">{THEMES[palette].name}</p>
           </div>
         </div>
 
-        {/* Action icons */}
+        {/* Action icons & Theme Switcher */}
         <div className="flex items-center gap-2">
+          <button
+            onPointerDown={(e) => {
+              e.stopPropagation();
+              setShowThemePicker((prev) => !prev);
+            }}
+            aria-label="Select Palette"
+            className="flex h-9 items-center gap-1.5 rounded-xl border border-white/15 bg-white/10 px-3 text-xs font-semibold text-slate-200 active:scale-95 hover:bg-white/15 transition"
+          >
+            <span>🎨</span>
+            <span className="hidden sm:inline">Theme</span>
+          </button>
+
           <button
             onPointerDown={(e) => {
               e.stopPropagation();
               toggleMute();
             }}
             aria-label="Toggle Sound"
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-lime-500/25 bg-lime-950/40 text-base active:scale-95"
+            className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/15 bg-white/10 text-sm active:scale-95"
           >
             {muted ? "🔇" : "🔊"}
           </button>
+
           {state === "playing" && (
             <button
               onPointerDown={(e) => {
@@ -180,11 +213,12 @@ export default function App() {
                 triggerHaptic("light");
               }}
               aria-label="Pause Game"
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-amber-500/30 bg-amber-950/40 text-base text-amber-300 active:scale-95"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-amber-300/30 bg-amber-500/20 text-sm text-amber-200 active:scale-95"
             >
               ⏸
             </button>
           )}
+
           {state === "menu" && (
             <button
               onPointerDown={(e) => {
@@ -192,7 +226,7 @@ export default function App() {
                 setShowHowTo((prev) => !prev);
               }}
               aria-label="Help"
-              className="flex h-10 w-10 items-center justify-center rounded-xl border border-lime-500/20 bg-lime-900/30 text-sm font-bold text-lime-300 active:scale-95"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/15 bg-white/10 text-xs font-bold text-slate-300 active:scale-95"
             >
               ❓
             </button>
@@ -202,7 +236,7 @@ export default function App() {
 
       {/* Main Canvas Gaming Area */}
       <main
-        className="relative flex-1 w-full h-full overflow-hidden bg-[#131d14]"
+        className="relative flex-1 w-full h-full overflow-hidden"
         style={{ touchAction: "none" }}
         onPointerDown={(e) => {
           if (state === "ready") return;
@@ -218,54 +252,54 @@ export default function App() {
 
         {/* Low Gas Emergency Ambient Warning */}
         {state === "playing" && gasLow && (
-          <div className="pointer-events-none absolute inset-0 animate-pulse bg-gradient-to-t from-red-600/30 via-red-900/10 to-transparent" />
+          <div className="pointer-events-none absolute inset-0 animate-pulse bg-gradient-to-t from-red-500/25 via-red-900/10 to-transparent" />
         )}
 
-        {/* ---------------- GET READY BRIEF BREATHER OVERLAY ---------------- */}
-        {state === "ready" && (
-          <div className="pointer-events-none absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[2px] animate-fade-in">
-            <div className="flex flex-col items-center">
-              <span className="text-4xl sm:text-5xl font-black text-lime-300 tracking-wider drop-shadow-[0_4px_12px_rgba(0,0,0,0.8)] animate-pulse">
-                GET READY! 💨
-              </span>
-              <p className="mt-2 text-xs font-bold text-lime-200/80">Hold screen to float</p>
-            </div>
-          </div>
-        )}
-
-        {/* ---------------- MAIN MENU ---------------- */}
+        {/* ---------------- MAIN MENU (Pastel Modern) ---------------- */}
         {state === "menu" && (
-          <div className="absolute inset-0 z-20 flex flex-col items-center justify-between p-4 sm:p-8 bg-gradient-to-b from-black/75 via-[#0e180d]/85 to-black/90 backdrop-blur-md overflow-y-auto">
-            {/* Top Badge */}
-            <div className="mt-2 flex items-center gap-2 rounded-full border border-lime-500/30 bg-lime-950/60 px-4 py-1.5 shadow-[0_4px_15px_rgba(132,204,22,0.15)]">
-              <span className="h-2 w-2 rounded-full bg-lime-400 animate-ping" />
-              <span className="text-xs font-extrabold tracking-widest text-lime-300 uppercase">
-                Arcade Simulator
-              </span>
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-between p-4 sm:p-8 bg-gradient-to-b from-slate-900/70 via-slate-900/80 to-slate-950/90 backdrop-blur-md overflow-y-auto">
+            {/* Top Palette Mode Pill Selector */}
+            <div className="flex flex-wrap items-center justify-center gap-1.5 rounded-2xl border border-white/10 bg-white/5 p-1.5 backdrop-blur-md">
+              {(["pastel", "peach", "cozy", "toxic"] as PaletteMode[]).map((mode) => (
+                <button
+                  key={mode}
+                  onPointerDown={(e) => {
+                    e.stopPropagation();
+                    changePalette(mode);
+                  }}
+                  className={`rounded-xl px-3 py-1 text-xs font-medium transition ${
+                    palette === mode
+                      ? "bg-white/20 text-white shadow-sm font-bold"
+                      : "text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  {THEMES[mode].name}
+                </button>
+              ))}
             </div>
 
             {/* Hero Title & Mascot */}
             <div className="flex flex-col items-center text-center my-auto max-w-sm">
               <div className="relative mb-3 flex items-center justify-center">
-                <div className="absolute -inset-4 rounded-full bg-lime-500/20 blur-xl animate-pulse" />
-                <span className="relative text-7xl select-none drop-shadow-[0_10px_15px_rgba(0,0,0,0.5)]">
+                <div className="absolute -inset-4 rounded-full bg-rose-400/20 blur-xl animate-pulse" />
+                <span className="relative text-7xl select-none drop-shadow-md">
                   🍑
                 </span>
               </div>
 
-              <h2 className="text-4xl sm:text-5xl font-black tracking-tight text-white drop-shadow-[0_4px_12px_rgba(0,0,0,0.7)]">
-                FART <span className="text-lime-400">SIMULATOR</span>
+              <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white drop-shadow-sm">
+                Fart <span className="text-rose-300 font-serif italic">Simulator</span>
               </h2>
-              <p className="mt-2 text-xs sm:text-sm font-medium text-lime-200/80 leading-relaxed px-4">
-                Tap &amp; hold to blast gas through treacherous pipelines. Munch beans to stay airborne and rack up insane combos!
+              <p className="mt-2 text-xs sm:text-sm font-normal text-slate-300/85 leading-relaxed px-4">
+                Tap and hold to glide gently with sheer intestinal power. Squeeze through the pipes and snack on beans!
               </p>
 
               {/* Best Score Pill */}
               {scores.length > 0 && (
-                <div className="mt-4 flex items-center gap-2 rounded-2xl border border-lime-500/30 bg-lime-900/30 px-4 py-2 text-xs font-bold text-lime-300">
-                  <span>🏆 High Score:</span>
-                  <span className="text-amber-300 font-extrabold text-sm">{scores[0].score}</span>
-                  <span className="text-lime-400/60 text-[10px]">({scores[0].rank})</span>
+                <div className="mt-4 flex items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold text-slate-200">
+                  <span>🏆 Best Score:</span>
+                  <span className="text-amber-300 font-bold text-sm">{scores[0].score}</span>
+                  <span className="text-slate-400 text-[10px]">({scores[0].rank})</span>
                 </div>
               )}
 
@@ -275,28 +309,28 @@ export default function App() {
                   e.stopPropagation();
                   launchGame();
                 }}
-                className="mt-6 w-full max-w-xs rounded-2xl border-b-[5px] border-lime-700 bg-gradient-to-r from-lime-400 via-lime-500 to-lime-400 py-4 text-base font-black uppercase tracking-wider text-lime-950 shadow-[0_12px_30px_rgba(132,204,22,0.4)] active:translate-y-1 active:border-b-2 active:shadow-none transition-all flex items-center justify-center gap-2"
+                className="mt-6 w-full max-w-xs rounded-2xl border-b-[4px] border-slate-700/80 bg-gradient-to-r from-rose-400 via-pink-400 to-amber-300 py-3.5 text-base font-bold uppercase tracking-wider text-slate-900 shadow-[0_10px_25px_rgba(244,114,182,0.3)] active:translate-y-1 active:border-b-0 active:shadow-none transition-all flex items-center justify-center gap-2"
               >
                 <span>LET IT RIP</span>
-                <span className="text-xl">💨</span>
+                <span className="text-lg">💨</span>
               </button>
             </div>
 
             {/* Quick Controls Bar */}
-            <div className="w-full max-w-sm rounded-2xl border border-lime-500/20 bg-black/40 p-3 backdrop-blur-sm">
-              <div className="flex items-center justify-around text-center text-[11px] font-bold text-lime-200/80">
+            <div className="w-full max-w-sm rounded-2xl border border-white/10 bg-white/5 p-3 backdrop-blur-sm">
+              <div className="flex items-center justify-around text-center text-[11px] font-medium text-slate-300">
                 <div className="flex flex-col items-center gap-1">
-                  <span className="text-lg">👆</span>
+                  <span className="text-base">👆</span>
                   <span>Hold to Float</span>
                 </div>
-                <div className="h-6 w-px bg-lime-500/20" />
+                <div className="h-5 w-px bg-white/10" />
                 <div className="flex flex-col items-center gap-1">
-                  <span className="text-lg">🫘</span>
+                  <span className="text-base">🫘</span>
                   <span>Eat Beans</span>
                 </div>
-                <div className="h-6 w-px bg-lime-500/20" />
+                <div className="h-5 w-px bg-white/10" />
                 <div className="flex flex-col items-center gap-1">
-                  <span className="text-lg">⚡</span>
+                  <span className="text-base">⚡</span>
                   <span>Graze for Combo</span>
                 </div>
               </div>
@@ -304,38 +338,86 @@ export default function App() {
           </div>
         )}
 
+        {/* ---------------- THEME PICKER MODAL ---------------- */}
+        {showThemePicker && (
+          <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md animate-fade-in">
+            <div className="w-full max-w-sm rounded-3xl border border-white/15 bg-slate-900/95 p-6 text-left shadow-2xl">
+              <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                <h3 className="text-base font-bold text-white">Color Palette &amp; Theme</h3>
+                <button
+                  onPointerDown={(e) => {
+                    e.stopPropagation();
+                    setShowThemePicker(false);
+                  }}
+                  className="h-8 w-8 rounded-full bg-white/10 text-slate-300 flex items-center justify-center font-bold"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="mt-4 space-y-2">
+                {(["pastel", "peach", "cozy", "toxic"] as PaletteMode[]).map((mode) => (
+                  <button
+                    key={mode}
+                    onPointerDown={(e) => {
+                      e.stopPropagation();
+                      changePalette(mode);
+                    }}
+                    className={`w-full flex items-center justify-between p-3 rounded-2xl border transition ${
+                      palette === mode
+                        ? "border-rose-400/60 bg-rose-500/20 text-white font-bold"
+                        : "border-white/10 bg-white/5 text-slate-300 hover:bg-white/10"
+                    }`}
+                  >
+                    <span className="text-sm">{THEMES[mode].name}</span>
+                    <span className="text-xs text-slate-400">
+                      {mode === "pastel"
+                        ? "Soft lavender & slate"
+                        : mode === "peach"
+                        ? "Warm rose & apricot"
+                        : mode === "cozy"
+                        ? "Earthy warm tones"
+                        : "Vibrant neon biohazard"}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ---------------- HOW TO PLAY MODAL ---------------- */}
         {showHowTo && (
-          <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/80 p-4 backdrop-blur-md animate-fade-in">
-            <div className="w-full max-w-sm rounded-3xl border border-lime-500/30 bg-[#0e170e] p-6 text-left shadow-2xl">
-              <div className="flex items-center justify-between pb-3 border-b border-lime-500/20">
-                <h3 className="text-lg font-black text-lime-300">How to Play</h3>
+          <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md animate-fade-in">
+            <div className="w-full max-w-sm rounded-3xl border border-white/15 bg-slate-900/95 p-6 text-left shadow-2xl">
+              <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                <h3 className="text-base font-bold text-white">How to Play</h3>
                 <button
                   onPointerDown={(e) => {
                     e.stopPropagation();
                     setShowHowTo(false);
                   }}
-                  className="h-8 w-8 rounded-full bg-lime-950/60 text-lime-300 font-bold flex items-center justify-center border border-lime-500/30"
+                  className="h-8 w-8 rounded-full bg-white/10 text-slate-300 flex items-center justify-center font-bold"
                 >
                   ✕
                 </button>
               </div>
-              <div className="mt-4 space-y-3 text-xs text-lime-100/90 leading-relaxed">
+              <div className="mt-4 space-y-3 text-xs text-slate-200/90 leading-relaxed">
                 <div className="flex items-start gap-2">
-                  <span className="text-lg">1.</span>
+                  <span className="font-bold text-rose-300">1.</span>
                   <p><strong>Hold anywhere:</strong> Squeezes gas to propel you upward against gravity.</p>
                 </div>
                 <div className="flex items-start gap-2">
-                  <span className="text-lg">2.</span>
-                  <p><strong>Watch the gas meter:</strong> Tooting drains intestinal gas. Collecting beans refills it!</p>
+                  <span className="font-bold text-rose-300">2.</span>
+                  <p><strong>Watch the gas meter:</strong> Tooting drains gas. Collecting beans refills it!</p>
                 </div>
                 <div className="flex items-start gap-2">
-                  <span className="text-lg">3.</span>
+                  <span className="font-bold text-rose-300">3.</span>
                   <p><strong>Combo multipliers:</strong> Graze near pipe rims to multiply your score up to 9x.</p>
                 </div>
                 <div className="flex items-start gap-2">
-                  <span className="text-lg">4.</span>
-                  <p><strong>Dynamic Haptics:</strong> Feel the rumble with every burst and bean pickup!</p>
+                  <span className="font-bold text-rose-300">4.</span>
+                  <p><strong>Color Palette:</strong> Switch between Pastel, Soft Peach, Cozy, and Classic Neon anytime!</p>
                 </div>
               </div>
               <button
@@ -343,9 +425,9 @@ export default function App() {
                   e.stopPropagation();
                   setShowHowTo(false);
                 }}
-                className="mt-6 w-full rounded-xl bg-lime-500 py-3 font-black text-black uppercase tracking-wider text-xs active:scale-95"
+                className="mt-6 w-full rounded-xl bg-gradient-to-r from-rose-400 to-amber-300 py-3 font-bold text-slate-900 uppercase tracking-wider text-xs active:scale-95"
               >
-                Got It, Let's Play!
+                Got It!
               </button>
             </div>
           </div>
@@ -354,19 +436,19 @@ export default function App() {
         {/* ---------------- PAUSE SCREEN ---------------- */}
         {state === "paused" && (
           <div className="absolute inset-0 z-30 flex items-center justify-center bg-black/75 px-4 text-center backdrop-blur-md animate-fade-in">
-            <div className="w-full max-w-xs rounded-3xl border border-lime-500/30 bg-[#0f190e] p-6 shadow-2xl">
+            <div className="w-full max-w-xs rounded-3xl border border-white/15 bg-slate-900/90 p-6 shadow-2xl">
               <span className="text-4xl">🧘‍♂️</span>
-              <h2 className="mt-2 text-2xl font-black text-lime-200">HOLDING IT IN…</h2>
-              <p className="mt-1 text-xs font-bold text-lime-400/80">Current Score: {Math.floor(hud.score)}</p>
+              <h2 className="mt-2 text-xl font-bold text-white">Holding It In…</h2>
+              <p className="mt-1 text-xs text-slate-300">Current Score: {Math.floor(hud.score)}</p>
 
-              <div className="mt-6 space-y-3">
+              <div className="mt-6 space-y-2.5">
                 <button
                   onPointerDown={(e) => {
                     e.stopPropagation();
                     gameRef.current?.resume();
                     triggerHaptic("light");
                   }}
-                  className="w-full rounded-2xl border-b-[4px] border-lime-700 bg-lime-400 py-3 text-sm font-black uppercase tracking-wider text-lime-950 active:translate-y-1 active:border-b-0"
+                  className="w-full rounded-2xl border-b-[3px] border-slate-700 bg-gradient-to-r from-rose-400 to-amber-300 py-3 text-xs font-bold uppercase tracking-wider text-slate-900 active:translate-y-0.5 active:border-b-0"
                 >
                   RESUME
                 </button>
@@ -375,7 +457,7 @@ export default function App() {
                     e.stopPropagation();
                     launchGame();
                   }}
-                  className="w-full rounded-2xl border border-lime-500/30 bg-lime-950/40 py-3 text-xs font-black uppercase tracking-wider text-lime-300 active:bg-lime-900/60"
+                  className="w-full rounded-2xl border border-white/15 bg-white/5 py-2.5 text-xs font-semibold text-slate-200 active:bg-white/10"
                 >
                   RESTART
                 </button>
@@ -388,7 +470,7 @@ export default function App() {
                       setState("menu");
                     }
                   }}
-                  className="w-full text-xs font-bold text-lime-500/70 hover:text-lime-300 py-1"
+                  className="w-full text-xs font-medium text-slate-400 hover:text-slate-200 py-1"
                 >
                   Quit to Menu
                 </button>
@@ -400,41 +482,41 @@ export default function App() {
         {/* ---------------- GAME OVER SCREEN ---------------- */}
         {state === "dead" && (
           <div className="absolute inset-0 z-30 flex flex-col items-center justify-center bg-black/80 px-4 text-center backdrop-blur-md animate-fade-in">
-            <div className="w-full max-w-sm rounded-3xl border border-red-500/30 bg-[#160f0f]/90 p-5 sm:p-6 shadow-[0_15px_40px_rgba(239,68,68,0.2)]">
+            <div className="w-full max-w-sm rounded-3xl border border-white/15 bg-slate-900/90 p-5 sm:p-6 shadow-2xl">
               <span className="text-4xl animate-bounce">💥</span>
-              <h2 className="mt-1 text-3xl font-black text-red-400 drop-shadow-[0_2px_8px_rgba(239,68,68,0.4)]">
+              <h2 className="mt-1 text-2xl font-black text-rose-300 drop-shadow-sm">
                 SPLAT!
               </h2>
-              <p className="mt-1 text-xs font-black uppercase tracking-widest text-lime-400">
-                {isNewBest ? "🎉 NEW HIGH SCORE!" : rankFor(finalScore)}
+              <p className="mt-1 text-xs font-semibold text-slate-300">
+                {isNewBest ? "🎉 New Personal Best!" : rankFor(finalScore)}
               </p>
               <div className="my-3 flex items-baseline justify-center gap-1">
                 <span className="text-5xl font-black text-white tabular-nums">{finalScore}</span>
-                <span className="text-xs font-bold text-lime-400/80">PTS</span>
+                <span className="text-xs font-semibold text-slate-400">PTS</span>
               </div>
 
               {/* High Scores List */}
-              <div className="my-3 max-h-36 overflow-y-auto rounded-2xl border border-lime-500/20 bg-black/50 p-2.5 text-left">
-                <div className="flex items-center justify-between pb-1 mb-1 border-b border-lime-500/20">
-                  <span className="text-[10px] font-black uppercase tracking-widest text-lime-400">
+              <div className="my-3 max-h-36 overflow-y-auto rounded-2xl border border-white/10 bg-black/30 p-2.5 text-left">
+                <div className="flex items-center justify-between pb-1 mb-1 border-b border-white/10">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-300">
                     Leaderboard
                   </span>
-                  <span className="text-[10px] font-semibold text-lime-200/50">Top Runs</span>
+                  <span className="text-[10px] text-slate-500">Top Runs</span>
                 </div>
                 {scores.map((s, i) => (
                   <div
                     key={i}
-                    className={`flex items-baseline justify-between py-1 text-xs font-bold ${
+                    className={`flex items-baseline justify-between py-1 text-xs ${
                       s.score === finalScore && isNewBest && i === 0
-                        ? "text-amber-300 bg-amber-500/10 px-1 rounded"
-                        : "text-lime-100/80"
+                        ? "text-amber-300 font-bold bg-amber-500/10 px-1 rounded"
+                        : "text-slate-300"
                     }`}
                   >
                     <div className="flex items-center gap-2">
-                      <span className="w-3 text-lime-500 text-[11px]">{i + 1}</span>
+                      <span className="w-3 text-slate-500 text-[11px]">{i + 1}</span>
                       <span className="truncate text-[11px] max-w-[120px]">{s.rank}</span>
                     </div>
-                    <span className="tabular-nums font-mono text-lime-300">{s.score}</span>
+                    <span className="tabular-nums font-mono text-slate-200">{s.score}</span>
                   </div>
                 ))}
               </div>
@@ -446,7 +528,7 @@ export default function App() {
                     e.stopPropagation();
                     launchGame();
                   }}
-                  className="w-full rounded-2xl border-b-[5px] border-lime-700 bg-gradient-to-r from-lime-400 via-lime-500 to-lime-400 py-3.5 text-base font-black uppercase tracking-wider text-lime-950 shadow-[0_8px_25px_rgba(132,204,22,0.4)] active:translate-y-1 active:border-b-2 active:shadow-none"
+                  className="w-full rounded-2xl border-b-[4px] border-slate-700 bg-gradient-to-r from-rose-400 via-pink-400 to-amber-300 py-3 text-sm font-bold uppercase tracking-wider text-slate-900 shadow-md active:translate-y-1 active:border-b-0"
                 >
                   TRY AGAIN
                 </button>
@@ -460,7 +542,7 @@ export default function App() {
                         setState("menu");
                       }
                     }}
-                    className="flex-1 rounded-xl border border-lime-500/30 bg-black/40 py-2.5 text-xs font-bold text-lime-300 active:bg-lime-950/40"
+                    className="flex-1 rounded-xl border border-white/15 bg-white/5 py-2 text-xs font-semibold text-slate-300 active:bg-white/10"
                   >
                     Main Menu
                   </button>
@@ -469,9 +551,9 @@ export default function App() {
                       e.stopPropagation();
                       setScores(clearScores());
                     }}
-                    className="rounded-xl border border-red-500/20 bg-red-950/30 px-3 py-2.5 text-[11px] font-bold text-red-300 hover:text-red-200"
+                    className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-[11px] text-slate-400 hover:text-rose-300"
                   >
-                    Reset Scores
+                    Reset
                   </button>
                 </div>
               </div>
@@ -481,9 +563,9 @@ export default function App() {
       </main>
 
       {/* Floating Bottom Touch Hint */}
-      <footer className="z-10 flex h-10 shrink-0 items-center justify-center border-t border-lime-500/10 bg-black/60 px-2 text-center backdrop-blur-sm">
-        <p className="text-[11px] font-semibold text-lime-300/70">
-          🎮 {state === "playing" ? "Touch & Hold Anywhere to Toot Upward" : "Touch / Click & Hold to Float"}
+      <footer className="z-10 flex h-10 shrink-0 items-center justify-center border-t border-white/10 bg-black/40 px-2 text-center backdrop-blur-sm">
+        <p className="text-[11px] font-medium text-slate-400">
+          🎮 {state === "playing" ? "Touch & Hold Screen to Glide" : "Touch / Click & Hold to Float"}
         </p>
       </footer>
 
