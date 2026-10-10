@@ -45,18 +45,27 @@ export async function preloadFartSounds() {
   if (!c || audioLoaded) return;
   audioLoaded = true;
 
-  for (const url of PURE_FART_FILES) {
-    try {
-      const resp = await fetch(url);
-      if (resp.ok) {
-        const arrayBuf = await resp.arrayBuffer();
-        const decoded = await c.decodeAudioData(arrayBuf);
-        audioBuffers.push(decoded);
+  await Promise.all(
+    PURE_FART_FILES.map(async (url) => {
+      try {
+        const resp = await fetch(url);
+        if (resp.ok) {
+          const arrayBuf = await resp.arrayBuffer();
+          const decoded = await c.decodeAudioData(arrayBuf);
+          audioBuffers.push(decoded);
+        }
+      } catch {
+        // ignore fetch/decode failures
       }
-    } catch {
-      // ignore fetch/decode failures
-    }
-  }
+    })
+  );
+}
+
+// Automatically begin fetching and decoding audio as soon as script runs
+if (typeof window !== "undefined") {
+  window.addEventListener("pointerdown", () => unlockAudio(), { once: true });
+  window.addEventListener("keydown", () => unlockAudio(), { once: true });
+  setTimeout(() => preloadFartSounds(), 100);
 }
 
 export function unlockAudio() {

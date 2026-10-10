@@ -52,21 +52,16 @@ export default function App() {
     };
   }, []);
 
-  // Smooth brief "Get Ready" pause (short ~500ms breather so user can position finger)
+  // Instant start when clicking Let It Rip or Try Again
   const launchGame = useCallback(() => {
     unlockAudio();
     triggerHaptic("medium");
-    if (getReadyTimerRef.current) clearTimeout(getReadyTimerRef.current);
 
     const g = gameRef.current;
     if (!g) return;
 
-    g.startCountdown();
-
-    getReadyTimerRef.current = window.setTimeout(() => {
-      getReadyTimerRef.current = null;
-      g.start();
-    }, 450);
+    g.start();
+    g.setThrust(true);
   }, []);
 
   const primaryAction = useCallback(
@@ -86,7 +81,7 @@ export default function App() {
         g.setThrust(true);
       } else if (g.state === "paused") {
         g.resume();
-      } else if (g.state === "dead" && performance.now() - deadAtRef.current > 600) {
+      } else if (g.state === "dead" && performance.now() - deadAtRef.current > 400) {
         launchGame();
       }
     },
