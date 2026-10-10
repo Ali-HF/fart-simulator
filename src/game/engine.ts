@@ -1040,7 +1040,6 @@ export class FartGame {
     g.beginPath();
     g.roundRect(bx, by, bw * gFill, bh, 8);
     g.fill();
-  }
 
     g.font = `800 12px ui-rounded, "Trebuchet MS", system-ui, sans-serif`;
     g.fillStyle = theme.hudText;
